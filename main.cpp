@@ -1,3 +1,9 @@
+/* PROJECT:  MPRO Laboraufgabe 2
+ *
+ * DEVELOPERS: Jannik Kreucher
+ *             Nick Diendorf
+ *             Benedikt Wendling
+ */
 #include "mbed.h"
 
 /*** PIN DEFINITIONS ***/
@@ -18,9 +24,10 @@
 #define SW_5    PA_6
 
 
-// main() runs in its own thread in the OS
-int main()
-{
+/*** MAIN FUNCTION ***/
+int main() {
+
+    // main loop
     while (true) {
 
     }
