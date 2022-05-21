@@ -102,16 +102,47 @@ class Blinker {
 
 
 
+enum BlinkerEvent {none, stop, shortLeft, longLeft, shortRight, longRight};
+
+class BlinkerInput {
+    private:
+        DigitalIn *buttonLeft, *buttonRight;
+        Timer timer;
+    public:
+        BlinkerInput(DigitalIn *left, DigitalIn *right) {
+            buttonLeft = left;
+            buttonRight = right;
+        }
+        BlinkerEvent check_event() {
+            return none;
+        }
+};
+
 
 /*** MAIN FUNCTION ***/
 int main() {
 
     Blinker car_blinker(&ledsLeft, &ledsRight);
-
-    car_blinker.blinkLeft();
+    BlinkerInput car_input(&buttonLeft, &buttonRight);
 
     // main loop
     while (true) {
+        // check buttons
+        uint8_t buttonEvent = car_input.check_event();
+        // check event
+        switch(buttonEvent) {
+            case none:
+                break;
+            case stop:
+                car_blinker.stop();
+                break;
+            case longLeft:
+                car_blinker.blinkLeft();
+                break;
+            case longRight:
+                car_blinker.blinkRight();
+        }
+        // led loop
         car_blinker.loop();
     }
 }
