@@ -40,6 +40,7 @@ BusOut ledsRight(LED_RED2, LED_ORANGE2, LED_GREEN2);
 DigitalIn buttonLeft(SW_5);
 DigitalIn buttonRight(SW_2);
 DigitalIn buttonWarning(SW_1);
+DigitalIn buttonDiagnosemode(SW_3);
 
 
 
@@ -211,6 +212,10 @@ int main() {
     BlinkerInput carInput(&buttonLeft, &buttonRight, &buttonWarning);
 
     uint8_t buttonState = StateNone; // long or short press
+
+    if(buttonDiagnosemode.read()==1){ //entering Diagnosemode when SW3 is pushed 
+        patternBlinkTime=300;
+    }
 
     // main loop
     while(1) {
