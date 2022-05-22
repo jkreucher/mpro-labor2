@@ -206,7 +206,7 @@ int main() {
 
     uint8_t buttonState = StateNone; // long or short press
 
-    if(buttonDiagnosemode.read()==1){
+    if(buttonDiagnosemode.read()==1){ //entering Diagnosemode when SW3 is pushed 
         patternBlinkTime=300;
     }
 
