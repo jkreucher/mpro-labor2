@@ -5,6 +5,7 @@
  *             Benedikt Wendling
  */
 #include "mbed.h"
+#include <chrono>
 #include <cstdint>
 
 
@@ -65,7 +66,8 @@ class Blinker {
             return mode;
         }
         void stop() {
-            mode = blinkerStop;
+            // finishes current blink pattern and stops when blink_counter gets decremented
+            blink_counter = 1;
         }
         void blinkLeft(int8_t count=-1) {
             mode = blinkerLeft;
@@ -77,6 +79,7 @@ class Blinker {
         }
         void warning() {
             mode = blinkerWarning;
+            blink_counter = -1;
         }
         void loop() {
             if(timer.elapsed_time() >= chrono::milliseconds(patternBlinkTime)) {
@@ -132,14 +135,54 @@ enum BlinkerEvent {EventNone, EventStop, EventShortLeft, EventLongLeft, EventSho
 class BlinkerInput {
     private:
         DigitalIn *buttonLeft, *buttonRight;
+        uint8_t leftPressed, rightPressed;
         Timer timer;
     public:
         BlinkerInput(DigitalIn *left, DigitalIn *right) {
             buttonLeft = left;
             buttonRight = right;
+            leftPressed = 0;
+            rightPressed = 0;
         }
         uint8_t check_event() {
-            return EventNone;
+            // set default event to none
+            uint8_t event = EventNone;
+            // check which button is pressed
+            if((*buttonLeft == 1) && (leftPressed == 0)) {
+                leftPressed = 1;
+                // left button pressed
+                timer.reset();
+                timer.start();
+            } else if((*buttonLeft == 0) && (leftPressed == 1)) {
+                leftPressed = 0;
+                // left button released
+                if(timer.elapsed_time() < chrono::milliseconds(600)) {
+                    // short press
+                    event = EventShortLeft;
+                } else {
+                    // long press
+                    event = EventLongLeft;
+                }
+                // stop timer
+                timer.stop();
+            } else if((*buttonRight == 1) && (rightPressed == 0)) {
+                rightPressed = 1;
+                // right button pressed
+                timer.reset();
+                timer.start();
+            } else if((*buttonRight == 0) && (rightPressed == 1)) {
+                rightPressed = 0;
+                // right button released
+                if(timer.elapsed_time() < chrono::milliseconds(600)) {
+                    // short press
+                    event = EventShortRight;
+                } else {
+                    // long press
+                    event = EventLongRight;
+                }
+            }
+            // return current event
+            return event;
         }
 };
 
@@ -152,16 +195,8 @@ int main() {
     Blinker car_blinker(&ledsLeft, &ledsRight);
     BlinkerInput car_input(&buttonLeft, &buttonRight);
 
-    Timer timer;
-    timer.start();
-
     // main loop
-    while (true) {
-        if(timer.elapsed_time() >= chrono::milliseconds(5000)) {
-            timer.reset();
-            car_blinker.blinkLeft(2);
-        }
-        /*
+    while(1) {
         // check buttons
         uint8_t buttonEvent = car_input.check_event();
         // check event
@@ -171,14 +206,19 @@ int main() {
             case EventStop:
                 car_blinker.stop();
                 break;
+            case EventShortLeft:
+                car_blinker.blinkLeft(4);
+                break;
             case EventLongLeft:
                 car_blinker.blinkLeft();
+                break;
+            case EventShortRight:
+                car_blinker.blinkRight(4);
                 break;
             case EventLongRight:
                 car_blinker.blinkRight();
                 break;
         }
-        */
         // led loop
         car_blinker.loop();
     }
