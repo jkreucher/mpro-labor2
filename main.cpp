@@ -236,7 +236,7 @@ int main() {
                 break;
             
             case EventLeftLong:
-                buttonState = StateLeftShort;
+                buttonState = StateLeftLong;
                 car_blinker.blinkLeft();
                 break;
             
