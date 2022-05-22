@@ -29,7 +29,7 @@
 
 // blink patterns
 const uint8_t patternBlinker[] = {0x1, 0x2, 0x4, 0x0, 0x0, 0x0};
-const uint8_t patternWarning[] = {0xF, 0xF, 0xF, 0x0, 0x0, 0x0};
+const uint8_t patternWarning[] = {0x5, 0x5, 0x5, 0x0, 0x0, 0x0};
 uint16_t patternBlinkTime = 100;
 
 // output definition
@@ -120,7 +120,11 @@ class Blinker {
                     *ledsLeft = *ledsRight = patternWarning[index];
                     index++;
                     // check if end of pattern reached
-                    if(index >= sizeof(patternWarning)) index = 0;
+                    if(index >= sizeof(patternWarning)) {
+                        index = 0;
+                        // decrement blinker counter
+                        blink_counter--;
+                    }
                 }
                 // manage blink counter
                 if(blink_counter == 0) {
@@ -135,7 +139,7 @@ class Blinker {
 
 
 
-enum BlinkerEvent {EventNone, EventStop, EventLeftPressed, EventLeftLong, EventLeftReleased, EventRightPressed, EventRightLong, EventRightReleased};
+enum BlinkerEvent {EventNone, EventStop, EventLeftPressed, EventLeftLong, EventLeftReleased, EventRightPressed, EventRightLong, EventRightReleased, EventWarningOn, EventWarningOff};
 
 class BlinkerInput {
     private:
@@ -149,12 +153,23 @@ class BlinkerInput {
             buttonWarning = warning;
             leftPressed = 0;
             rightPressed = 0;
+            warningSwitched = 0;
         }
         uint8_t check_event() {
             // set default event to none
             uint8_t event = EventNone;
-            // check which button is pressed        
-            if((*buttonLeft == 1) && (leftPressed == 0)) {
+            // check which button is pressed
+            if(*buttonWarning == 1) {
+                // warning switch flipped on
+                warningSwitched = 1;
+                event = EventWarningOn;
+            } else if((*buttonWarning == 0) && (warningSwitched == 1)) {
+                // warning switch flipped off
+                warningSwitched = 0;
+                event = EventWarningOff;
+            }
+
+            else if((*buttonLeft == 1) && (leftPressed == 0)) {
                 // left button pressed
                 leftPressed = 1;
                 timer.reset();
@@ -216,6 +231,15 @@ int main() {
             
             case EventStop:
                 car_blinker.stop();
+                break;
+            
+            // handle warning light
+            case EventWarningOn:
+                car_blinker.warning();
+                break;
+            
+            case EventWarningOff:
+                car_blinker.stopFinish();
                 break;
             
             // handle left button events
