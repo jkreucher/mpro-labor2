@@ -29,7 +29,7 @@
 
 // blink patterns
 const uint8_t patternBlinker[] = {0x1, 0x2, 0x4, 0x0, 0x0, 0x0};
-const uint8_t patternWarning[] = {0xF, 0xF, 0xF, 0x0, 0x0, 0x0};
+const uint8_t patternWarning[] = {0x5, 0x5, 0x5, 0x0, 0x0, 0x0};
 uint16_t patternBlinkTime = 100;
 
 // output definition
@@ -137,7 +137,7 @@ class Blinker {
 };
 
 
-enum BlinkerEvent {EventNone, EventStop, EventLeftPressed, EventLeftLong, EventLeftReleased, EventRightPressed, EventRightLong, EventRightReleased};
+enum BlinkerEvent {EventNone, EventStop, EventLeftPressed, EventLeftLong, EventLeftReleased, EventRightPressed, EventRightLong, EventRightReleased, EventWarningOn, EventWarningOff};
 
 class BlinkerInput {
     private:
@@ -151,6 +151,7 @@ class BlinkerInput {
             buttonWarning = warning;
             leftPressed = 0;
             rightPressed = 0;
+            warningSwitched = 0;
         }
 
         uint8_t checkEvent() {
@@ -159,8 +160,19 @@ class BlinkerInput {
 
             // check which button is pressed
 
-            // LEFT BUTTON        
-            if((*buttonLeft == 1) && (leftPressed == 0)) {
+            // WARNING BUTTON
+            if(*buttonWarning == 1) {
+                // warning switch flipped on
+                warningSwitched = 1;
+                event = EventWarningOn;
+            } else if((*buttonWarning == 0) && (warningSwitched == 1)) {
+                // warning switch flipped off
+                warningSwitched = 0;
+                event = EventWarningOff;
+            }
+
+            // LEFT BUTTON
+            else if((*buttonLeft == 1) && (leftPressed == 0)) {
                 // left button pressed
                 leftPressed = 1;
                 timer.reset();
@@ -229,6 +241,15 @@ int main() {
             
             case EventStop:
                 carBlinker.stop();
+                break;
+            
+            // handle warning light
+            case EventWarningOn:
+                carBlinker.warning();
+                break;
+            
+            case EventWarningOff:
+                carBlinker.stopFinish();
                 break;
             
             // handle left button events
