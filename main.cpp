@@ -249,7 +249,7 @@ int main() {
                 break;
             
             case EventWarningOff:
-                carBlinker.stopFinish();
+                carBlinker.finishAndStop();
                 break;
             
             // handle left button events
