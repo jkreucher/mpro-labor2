@@ -5,7 +5,6 @@
  *             Benedikt Wendling
  */
 #include "mbed.h"
-#include <chrono>
 #include <cstdint>
 
 
@@ -50,6 +49,7 @@ class Blinker {
         BusOut *ledsLeft, *ledsRight;
         Timer timer;
         uint8_t mode, index;
+        int8_t blink_counter;
     public:
         Blinker(BusOut* left, BusOut* right) {
             // initialize leds
@@ -57,6 +57,7 @@ class Blinker {
             ledsRight = right;
             mode = blinkerStop;
             index = 0;
+            blink_counter = -1;
             // start local timer
             timer.start();
         }
@@ -66,11 +67,13 @@ class Blinker {
         void stop() {
             mode = blinkerStop;
         }
-        void blinkLeft() {
+        void blinkLeft(int8_t count=-1) {
             mode = blinkerLeft;
+            blink_counter = count;
         }
-        void blinkRight() {
+        void blinkRight(int8_t count=-1) {
             mode = blinkerRight;
+            blink_counter = count;
         }
         void warning() {
             mode = blinkerWarning;
@@ -87,18 +90,35 @@ class Blinker {
                     *ledsRight = 0;
                     *ledsLeft = patternBlinker[index];
                     index++;
-                    if(index >= sizeof(patternBlinker)) index = 0;
+                    // check if end of pattern reached
+                    if(index >= sizeof(patternBlinker)) {
+                        index = 0;
+                        // decrement blinker counter
+                        blink_counter--;
+                    }
                 } else if(mode == blinkerRight) {
                     // blink right
                     *ledsLeft = 0;
                     *ledsRight = patternBlinker[index];
                     index++;
-                    if(index >= sizeof(patternBlinker)) index = 0;
+                    // check if end of pattern reached
+                    if(index >= sizeof(patternBlinker)) {
+                        index = 0;
+                        // decrement blinker counter
+                        blink_counter--;
+                    }
                 } else if(mode == blinkerWarning) {
                     // blink both
                     *ledsLeft = *ledsRight = patternWarning[index];
-                     index++;
+                    index++;
+                    // check if end of pattern reached
                     if(index >= sizeof(patternWarning)) index = 0;
+                }
+                // manage blink counter
+                if(blink_counter == 0) {
+                    mode = blinkerStop;
+                } else if(blink_counter < 0) {
+                    blink_counter = -1;
                 }
             }
         }
@@ -107,7 +127,7 @@ class Blinker {
 
 
 
-enum BlinkerEvent {none, stop, shortLeft, longLeft, shortRight, longRight};
+enum BlinkerEvent {EventNone, EventStop, EventShortLeft, EventLongLeft, EventShortRight, EventLongRight};
 
 class BlinkerInput {
     private:
@@ -118,8 +138,8 @@ class BlinkerInput {
             buttonLeft = left;
             buttonRight = right;
         }
-        BlinkerEvent check_event() {
-            return none;
+        uint8_t check_event() {
+            return EventNone;
         }
 };
 
@@ -132,23 +152,33 @@ int main() {
     Blinker car_blinker(&ledsLeft, &ledsRight);
     BlinkerInput car_input(&buttonLeft, &buttonRight);
 
+    Timer timer;
+    timer.start();
+
     // main loop
     while (true) {
+        if(timer.elapsed_time() >= chrono::milliseconds(5000)) {
+            timer.reset();
+            car_blinker.blinkLeft(2);
+        }
+        /*
         // check buttons
         uint8_t buttonEvent = car_input.check_event();
         // check event
         switch(buttonEvent) {
-            case none:
+            case EventNone:
                 break;
-            case stop:
+            case EventStop:
                 car_blinker.stop();
                 break;
-            case longLeft:
+            case EventLongLeft:
                 car_blinker.blinkLeft();
                 break;
-            case longRight:
+            case EventLongRight:
                 car_blinker.blinkRight();
+                break;
         }
+        */
         // led loop
         car_blinker.loop();
     }
