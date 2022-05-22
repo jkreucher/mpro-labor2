@@ -203,20 +203,49 @@ int main() {
         switch(buttonEvent) {
             case EventNone:
                 break;
+            
             case EventStop:
                 car_blinker.stop();
                 break;
+            
             case EventShortLeft:
-                car_blinker.blinkLeft(4);
+                if(car_blinker.isBlinking() == blinkerRight) {
+                    // is blinking, so stop
+                    car_blinker.stop();
+                } else {
+                    // not blinking, activate blinker
+                    car_blinker.blinkLeft(4);
+                }
                 break;
+            
             case EventLongLeft:
-                car_blinker.blinkLeft();
+                if(car_blinker.isBlinking() == blinkerRight) {
+                    // is blinking, so stop
+                    car_blinker.stop();
+                } else {
+                    // not blinking, activate blinker
+                    car_blinker.blinkLeft();
+                }
                 break;
+            
             case EventShortRight:
-                car_blinker.blinkRight(4);
+                if(car_blinker.isBlinking() == blinkerLeft) {
+                    // is blinking, so stop
+                    car_blinker.stop();
+                } else {
+                    // not blinking, activate blinker
+                    car_blinker.blinkRight(4);
+                }
                 break;
+            
             case EventLongRight:
-                car_blinker.blinkRight();
+                if(car_blinker.isBlinking() == blinkerLeft) {
+                    // is blinking, so stop
+                    car_blinker.stop();
+                } else {
+                    // not blinking, activate blinker
+                    car_blinker.blinkRight();
+                }
                 break;
         }
         // led loop
