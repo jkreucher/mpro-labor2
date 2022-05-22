@@ -41,6 +41,10 @@ DigitalIn buttonRight(SW_2);
 DigitalIn buttonWarning(SW_1);
 
 
+
+
+enum BlinkerState {blinkerStop, blinkerLeft, blinkerRight, blinkerWarning};
+
 class Blinker {
     private:
         BusOut *ledsLeft, *ledsRight;
@@ -51,7 +55,7 @@ class Blinker {
             // initialize leds
             ledsLeft = left;
             ledsRight = right;
-            mode = 0;
+            mode = blinkerStop;
             index = 0;
             // start local timer
             timer.start();
@@ -60,37 +64,37 @@ class Blinker {
             return mode;
         }
         void stop() {
-            mode = 0;
+            mode = blinkerStop;
         }
         void blinkLeft() {
-            mode = 1;
+            mode = blinkerLeft;
         }
         void blinkRight() {
-            mode = 2;
+            mode = blinkerRight;
         }
         void warning() {
-            mode = 3;
+            mode = blinkerWarning;
         }
         void loop() {
             if(timer.elapsed_time() >= chrono::milliseconds(patternBlinkTime)) {
                 timer.reset();
                 // check blink mode
-                if(mode == 0) {
+                if(mode == blinkerStop) {
                     // off
                     index = 0;
-                } else if(mode == 1) {
+                } else if(mode == blinkerLeft) {
                     // blink left
                     *ledsRight = 0;
                     *ledsLeft = patternBlinker[index];
                     index++;
                     if(index >= sizeof(patternBlinker)) index = 0;
-                } else if(mode == 2) {
+                } else if(mode == blinkerRight) {
                     // blink right
                     *ledsLeft = 0;
                     *ledsRight = patternBlinker[index];
                     index++;
                     if(index >= sizeof(patternBlinker)) index = 0;
-                } else if(mode == 3) {
+                } else if(mode == blinkerWarning) {
                     // blink both
                     *ledsLeft = *ledsRight = patternWarning[index];
                      index++;
@@ -99,6 +103,7 @@ class Blinker {
             }
         }
 };
+
 
 
 
@@ -117,6 +122,8 @@ class BlinkerInput {
             return none;
         }
 };
+
+
 
 
 /*** MAIN FUNCTION ***/
