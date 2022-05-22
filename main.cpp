@@ -35,6 +35,7 @@ uint16_t patternBlinkTime = 100;
 // output definition
 BusOut ledsLeft(LED_RED1, LED_ORANGE1, LED_GREEN1);
 BusOut ledsRight(LED_RED2, LED_ORANGE2, LED_GREEN2);
+
 // input definition
 DigitalIn buttonLeft(SW_5);
 DigitalIn buttonRight(SW_2);
@@ -50,7 +51,7 @@ class Blinker {
         BusOut *ledsLeft, *ledsRight;
         Timer timer;
         uint8_t mode, index;
-        int8_t blink_counter;
+        int8_t sequenceCounter;
     public:
         Blinker(BusOut* left, BusOut* right) {
             // initialize leds
@@ -58,81 +59,81 @@ class Blinker {
             ledsRight = right;
             mode = blinkerStop;
             index = 0;
-            blink_counter = -1;
+            sequenceCounter = -1;
+
             // start local timer
             timer.start();
         }
-        uint8_t isBlinking() {
+
+        uint8_t getMode() {
             return mode;
         }
+
         void stop() {
             mode = blinkerStop;
         }
-        void stopFinish() {
+
+        void finishAndStop() {
             // finishes current blink pattern and stops when blink_counter gets decremented
-            blink_counter = 1;
+            sequenceCounter = 1;
         }
+
         void blinkLeft(int8_t count=-1) {
             mode = blinkerLeft;
-            blink_counter = count;
+            sequenceCounter = count;
         }
+
         void blinkRight(int8_t count=-1) {
             mode = blinkerRight;
-            blink_counter = count;
+            sequenceCounter = count;
         }
+
         void warning() {
             mode = blinkerWarning;
-            blink_counter = -1;
+            sequenceCounter = -1;
         }
+
         void loop() {
             if(timer.elapsed_time() >= chrono::milliseconds(patternBlinkTime)) {
                 timer.reset();
+
                 // check blink mode
                 if(mode == blinkerStop) {
                     // off
                     *ledsRight = 0;
                     *ledsLeft = 0;
                     index = 0;
-                } else if(mode == blinkerLeft) {
-                    // blink left
-                    *ledsRight = 0;
-                    *ledsLeft = patternBlinker[index];
+                } else {
+                    switch(mode) {
+                        case blinkerLeft:
+                            *ledsRight = 0;
+                            *ledsLeft = patternBlinker[index];
+                            break;
+                        case blinkerRight:
+                            *ledsLeft = 0;
+                            *ledsRight = patternBlinker[index];
+                            break;
+                        case blinkerWarning:
+                            *ledsLeft = *ledsRight = patternWarning[index];
+                    }
+
+                    // increment index and if index greater than pattern size than set to zero and decrement sequence number
                     index++;
-                    // check if end of pattern reached
                     if(index >= sizeof(patternBlinker)) {
                         index = 0;
-                        // decrement blinker counter
-                        blink_counter--;
+                        sequenceCounter--;
                     }
-                } else if(mode == blinkerRight) {
-                    // blink right
-                    *ledsLeft = 0;
-                    *ledsRight = patternBlinker[index];
-                    index++;
-                    // check if end of pattern reached
-                    if(index >= sizeof(patternBlinker)) {
-                        index = 0;
-                        // decrement blinker counter
-                        blink_counter--;
-                    }
-                } else if(mode == blinkerWarning) {
-                    // blink both
-                    *ledsLeft = *ledsRight = patternWarning[index];
-                    index++;
-                    // check if end of pattern reached
-                    if(index >= sizeof(patternWarning)) index = 0;
                 }
+
                 // manage blink counter
-                if(blink_counter == 0) {
+                if(sequenceCounter == 0) {
                     mode = blinkerStop;
-                } else if(blink_counter < 0) {
-                    blink_counter = -1;
+                } else if(sequenceCounter < 0) {
+                    sequenceCounter = -1;
                 }
             }
         }
 };
-
-
 
 
 enum BlinkerEvent {EventNone, EventStop, EventLeftPressed, EventLeftLong, EventLeftReleased, EventRightPressed, EventRightLong, EventRightReleased};
@@ -150,10 +151,14 @@ class BlinkerInput {
             leftPressed = 0;
             rightPressed = 0;
         }
-        uint8_t check_event() {
+
+        uint8_t checkEvent() {
             // set default event to none
             uint8_t event = EventNone;
-            // check which button is pressed        
+
+            // check which button is pressed
+
+            // LEFT BUTTON        
             if((*buttonLeft == 1) && (leftPressed == 0)) {
                 // left button pressed
                 leftPressed = 1;
@@ -171,6 +176,7 @@ class BlinkerInput {
                 event = EventLeftLong;
             }
             
+            // RIGHT BUTTON
             else if((*buttonRight == 1) && (rightPressed == 0)) {
                 // right button pressed
                 rightPressed = 1;
@@ -178,7 +184,7 @@ class BlinkerInput {
                 timer.start();
                 event = EventRightPressed;
             } else if((*buttonRight == 0) && (rightPressed == 1)) {
-                // right released
+                // right button released
                 rightPressed = 0;
                 event = EventRightReleased;
                 // stop timer
@@ -187,6 +193,7 @@ class BlinkerInput {
                 // continuous mode
                 event = EventRightLong;
             }
+
             // return current event
             return event;
         }
@@ -200,73 +207,77 @@ enum ButtonState {StateNone, StateLeftShort, StateLeftLong, StateRightShort, Sta
 /*** MAIN FUNCTION ***/
 int main() {
 
-    Blinker car_blinker(&ledsLeft, &ledsRight);
-    BlinkerInput car_input(&buttonLeft, &buttonRight, &buttonWarning);
+    Blinker carBlinker(&ledsLeft, &ledsRight);
+    BlinkerInput carInput(&buttonLeft, &buttonRight, &buttonWarning);
 
     uint8_t buttonState = StateNone; // long or short press
 
     // main loop
     while(1) {
         // check buttons
-        uint8_t buttonEvent = car_input.check_event();
+        uint8_t buttonEvent = carInput.checkEvent();
+
         // check event
         switch(buttonEvent) {
             case EventNone:
                 break;
             
             case EventStop:
-                car_blinker.stop();
+                carBlinker.stop();
                 break;
             
             // handle left button events
             case EventLeftPressed:
                 if(buttonState == StateRightShort) {
-                    car_blinker.stop();
+                    carBlinker.stop();
                     buttonState = StateNone;
                 } else {
-                    car_blinker.blinkLeft(4);
+                    carBlinker.blinkLeft(4);
                     buttonState = StateLeftShort;
                 }
                 break;
             
             case EventLeftReleased:
                 if(buttonState == StateLeftLong) {
-                    car_blinker.stopFinish();
+                    carBlinker.finishAndStop();
                 }
                 break;
             
             case EventLeftLong:
                 buttonState = StateLeftLong;
-                car_blinker.blinkLeft();
+                carBlinker.blinkLeft();
                 break;
             
             // handle right button events
             case EventRightPressed:
                 if(buttonState == StateLeftShort) {
-                    car_blinker.stop();
+                    carBlinker.stop();
                     buttonState = StateNone;
                 } else {
-                    car_blinker.blinkRight(4);
+                    carBlinker.blinkRight(4);
                     buttonState = StateRightShort;
                 }
                 break;
             
             case EventRightReleased:
                 if(buttonState == StateRightLong) {
-                    car_blinker.stopFinish();
+                    carBlinker.finishAndStop();
                 }
                 break;
             
             case EventRightLong:
                 buttonState = StateRightLong;
-                car_blinker.blinkRight();
+                carBlinker.blinkRight();
         }
+
         // reset button state when nothing is blinking
-        if(car_blinker.isBlinking() == blinkerStop) {
+        if(carBlinker.getMode() == blinkerStop) {
             buttonState = StateNone;
         }
+
         // led loop
-        car_blinker.loop();
+        carBlinker.loop();
+
         // debounce delay
         ThisThread::sleep_for(10ms);
     }
