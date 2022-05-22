@@ -135,7 +135,7 @@ class Blinker {
 
 
 
-enum BlinkerEvent {EventNone, EventStop, EventLeftPressed, EventLeftLong, EventLeftReleased};
+enum BlinkerEvent {EventNone, EventStop, EventLeftPressed, EventLeftLong, EventLeftReleased, EventRightPressed, EventRightLong, EventRightReleased};
 
 class BlinkerInput {
     private:
@@ -148,6 +148,7 @@ class BlinkerInput {
             buttonRight = right;
             buttonWarning = warning;
             leftPressed = 0;
+            rightPressed = 0;
         }
         uint8_t check_event() {
             // set default event to none
@@ -169,6 +170,23 @@ class BlinkerInput {
                 // continuous mode
                 event = EventLeftLong;
             }
+            
+            else if((*buttonRight == 1) && (rightPressed == 0)) {
+                // right button pressed
+                rightPressed = 1;
+                timer.reset();
+                timer.start();
+                event = EventRightPressed;
+            } else if((*buttonRight == 0) && (rightPressed == 1)) {
+                // right released
+                rightPressed = 0;
+                event = EventRightReleased;
+                // stop timer
+                timer.stop();
+            } else if((rightPressed == 1) && (timer.elapsed_time() >= chrono::milliseconds(600))) {
+                // continuous mode
+                event = EventRightLong;
+            }
             // return current event
             return event;
         }
@@ -177,13 +195,15 @@ class BlinkerInput {
 
 
 
+enum ButtonState {StateNone, StateLeftShort, StateLeftLong, StateRightShort, StateRightLong};
+
 /*** MAIN FUNCTION ***/
 int main() {
 
     Blinker car_blinker(&ledsLeft, &ledsRight);
     BlinkerInput car_input(&buttonLeft, &buttonRight, &buttonWarning);
 
-    uint8_t buttonState = 0; // long or short press
+    uint8_t buttonState = StateNone; // long or short press
 
     // main loop
     while(1) {
@@ -198,21 +218,48 @@ int main() {
                 car_blinker.stop();
                 break;
             
+            // handle left button events
             case EventLeftPressed:
-                buttonState = 0;
-                car_blinker.blinkLeft(4);
+                if(buttonState == StateRightShort) {
+                    car_blinker.stop();
+                    buttonState = StateNone;
+                } else {
+                    car_blinker.blinkLeft(4);
+                    buttonState = StateLeftShort;
+                }
                 break;
-
+            
             case EventLeftReleased:
-                if(buttonState == 1) {
+                if(buttonState == StateLeftLong) {
                     car_blinker.stopFinish();
                 }
                 break;
             
             case EventLeftLong:
-                buttonState = 1;
+                buttonState = StateLeftShort;
                 car_blinker.blinkLeft();
                 break;
+            
+            // handle right button events
+            case EventRightPressed:
+                if(buttonState == StateLeftShort) {
+                    car_blinker.stop();
+                    buttonState = StateNone;
+                } else {
+                    car_blinker.blinkRight(4);
+                    buttonState = StateRightShort;
+                }
+                break;
+            
+            case EventRightReleased:
+                if(buttonState == StateRightLong) {
+                    car_blinker.stopFinish();
+                }
+                break;
+            
+            case EventRightLong:
+                buttonState = StateRightLong;
+                car_blinker.blinkRight();
         }
         // led loop
         car_blinker.loop();
