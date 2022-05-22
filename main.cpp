@@ -261,6 +261,10 @@ int main() {
                 buttonState = StateRightLong;
                 car_blinker.blinkRight();
         }
+        // reset button state when nothing is blinking
+        if(car_blinker.isBlinking() == blinkerStop) {
+            buttonState = StateNone;
+        }
         // led loop
         car_blinker.loop();
         // debounce delay
