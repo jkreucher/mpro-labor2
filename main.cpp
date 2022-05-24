@@ -255,7 +255,8 @@ int main() {
             
             // handle left button events
             case EventLeftPressed:
-                if(buttonState == StateRightShort) {
+                // check if blinker has to be stopped
+                if(carBlinker.getMode() == blinkerRight) {
                     carBlinker.stop();
                     buttonState = StateNone;
                 } else {
@@ -277,7 +278,8 @@ int main() {
             
             // handle right button events
             case EventRightPressed:
-                if(buttonState == StateLeftShort) {
+                // check if blinker has to be stopped
+                if(carBlinker.getMode() == blinkerLeft) {
                     carBlinker.stop();
                     buttonState = StateNone;
                 } else {
@@ -295,11 +297,6 @@ int main() {
             case EventRightLong:
                 buttonState = StateRightLong;
                 carBlinker.blinkRight();
-        }
-
-        // reset button state when nothing is blinking
-        if(carBlinker.getMode() == blinkerStop) {
-            buttonState = StateNone;
         }
 
         // led loop
