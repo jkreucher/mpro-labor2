@@ -172,7 +172,7 @@ class BlinkerInput {
             }
 
             // LEFT BUTTON
-            else if((*buttonLeft == 1) && (leftPressed == 0)) {
+            else if((*buttonLeft == 1) && (leftPressed == 0) && (rightPressed == 0)) {
                 // left button pressed
                 leftPressed = 1;
                 timer.reset();
@@ -190,7 +190,7 @@ class BlinkerInput {
             }
             
             // RIGHT BUTTON
-            else if((*buttonRight == 1) && (rightPressed == 0)) {
+            else if((*buttonRight == 1) && (rightPressed == 0) && (leftPressed == 0)) {
                 // right button pressed
                 rightPressed = 1;
                 timer.reset();
