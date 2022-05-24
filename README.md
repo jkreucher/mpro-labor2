@@ -1,5 +1,7 @@
 # Labor 2: Nachbildung des Blinkers am Automobil
 
+MPRO Labor bei Prof. Dr.‐Ing. Jens Altenburg an der TH-Bingen
+
 ## Zielstellung:
 Nach den ersten Versuchen zur Tastenabfrage und der Ausgabe von Lichtsignalen soll im nächsten Schritt die Frage der eventgesteuerten Programmierung vertiefend betrachtet werden. Dazu wird das Blinkverhalten eines Automobils programmtechnisch nachgebildet. Die sechs LEDs auf dem Velleman‐Bord werden in zwei Gruppen á 3 LEDs für den Blinker „Rechts“ bzw. „Links“ unterteilt. Die Taster SW2 und SW5 sind die Schaltkontakte des Blinkhebels (vergl. Laborvorlesung). Mit SW1 wird der Warnblink‐Mode aktiviert. Weil es sich um ein Fahrzeug der neuesten Generation in der Premiumkategorie handelt, ist der Blinkvorgang als „Angeberblinken“ zu realisieren. „Angeberblinken“ ist das nacheinander erfolgende Aufleuchten der drei Richtungs‐LEDs der jeweils aktivierten Seite. Bei dem fiktionalen Auto handelt es sich natürlich um ein elektrisch angetriebenes Gefährt. Ein miniaturisierter Thorium‐Atomreaktor ist die Energiequelle für den Antrieb.
 
